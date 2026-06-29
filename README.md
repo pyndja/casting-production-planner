@@ -1,6 +1,6 @@
 # UBS Gold — Casting Production Planner (Mockup)
 
-Mockup pitching untuk perencanaan produksi casting perhiasan emas. Dari **SOM (Surat Order Marketing)** sistem menurunkan kebutuhan casting (jumlah pohon lilin, pcs per pohon, kebutuhan logam) di tiga level: **SOM (agregat) → BOM/produk → Manufacturing Order**.
+Mockup untuk perencanaan produksi casting perhiasan emas. Dari **SOM (Surat Order Marketing)** sistem menurunkan kebutuhan casting (jumlah pohon lilin, pcs per pohon, kebutuhan logam) di tiga level: **SOM (agregat) → BOM/produk → Manufacturing Order**.
 
 ## Stack
 
@@ -30,4 +30,4 @@ npm run build   # build produksi
 
 ## Dokumentasi
 
-Lihat [PLANNING.md](PLANNING.md) untuk model data, logika kalkulasi, dan keputusan desain. Mockup awal single-file diarsipkan di `archive/index.html`.
+Lihat [.claude/PLANNING.md](.claude/PLANNING.md) untuk model data, logika kalkulasi, dan keputusan desain. Mockup awal single-file diarsipkan di `archive/index.html`.

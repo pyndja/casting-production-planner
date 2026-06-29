@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalkulator Casting Perhiasan</title>
+<style>
+  :root{
+    --primary:#b8860b;
+    --primary-dark:#8c6608;
+    --bg:#f7f5f2;
+    --card:#ffffff;
+    --text:#2b2622;
+    --muted:#6b6258;
+    --border:#e3ddd3;
+    --error:#c0392b;
+    --error-bg:#fdecea;
+    --success-bg:#f4f9f0;
+    --success-border:#a9d18d;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:24px 16px 60px;
+  }
+  .container{
+    max-width:640px;
+    margin:0 auto;
+  }
+  header{
+    text-align:center;
+    margin-bottom:24px;
+  }
+  header h1{
+    font-size:1.5rem;
+    margin:0 0 4px;
+    color:var(--primary-dark);
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:0.9rem;
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:22px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.04);
+    margin-bottom:20px;
+  }
+  .card h2{
+    font-size:1.05rem;
+    margin:0 0 16px;
+    color:var(--text);
+  }
+  .field{
+    margin-bottom:16px;
+  }
+  label{
+    display:block;
+    font-size:0.85rem;
+    font-weight:600;
+    margin-bottom:6px;
+    color:var(--text);
+  }
+  input[type="text"],
+  input[type="number"],
+  select{
+    width:100%;
+    padding:11px 12px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:1rem;
+    background:#fff;
+    color:var(--text);
+    transition:border-color .15s ease;
+  }
+  input:focus, select:focus{
+    outline:none;
+    border-color:var(--primary);
+  }
+  .field.has-error input,
+  .field.has-error select{
+    border-color:var(--error);
+  }
+  .error-msg{
+    color:var(--error);
+    font-size:0.8rem;
+    margin-top:5px;
+    display:none;
+  }
+  .field.has-error .error-msg{
+    display:block;
+  }
+  .row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  @media (max-width:480px){
+    .row{grid-template-columns:1fr;}
+  }
+  button{
+    width:100%;
+    padding:14px;
+    font-size:1rem;
+    font-weight:700;
+    border:none;
+    border-radius:10px;
+    background:var(--primary);
+    color:#fff;
+    cursor:pointer;
+    transition:background .15s ease;
+  }
+  button:hover{
+    background:var(--primary-dark);
+  }
+  #resultSection{
+    display:none;
+  }
+  .result-title{
+    font-size:1.05rem;
+    font-weight:700;
+    margin:0 0 16px;
+    color:var(--primary-dark);
+  }
+  .result-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:16px;
+  }
+  @media (max-width:480px){
+    .result-grid{grid-template-columns:1fr;}
+  }
+  .result-item{
+    background:var(--success-bg);
+    border:1px solid var(--success-border);
+    border-radius:10px;
+    padding:14px;
+  }
+  .result-item .label{
+    font-size:0.78rem;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .result-item .value{
+    font-size:1.25rem;
+    font-weight:700;
+    color:var(--text);
+  }
+  .summary-box{
+    background:#fff8ec;
+    border:1px solid #f0d9a0;
+    border-radius:10px;
+    padding:16px;
+    text-align:center;
+    font-size:1.05rem;
+    font-weight:700;
+    color:var(--primary-dark);
+  }
+  .alert-warning{
+    background:var(--error-bg);
+    border:1px solid #f1b9b2;
+    color:var(--error);
+    border-radius:10px;
+    padding:12px 14px;
+    margin-bottom:16px;
+    font-size:0.88rem;
+  }
+  .viz-section{
+    margin-top:20px;
+  }
+  .viz-block{
+    margin-bottom:24px;
+  }
+  .viz-block h3{
+    font-size:0.9rem;
+    margin:0 0 10px;
+    color:var(--text);
+  }
+  .capacity-bar-wrap{
+    position:relative;
+    height:34px;
+    background:#eee9e1;
+    border-radius:8px;
+    overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .capacity-segment{
+    position:absolute;
+    top:0;
+    height:100%;
+    transition:width .25s ease;
+  }
+  .seg-sprue{ background:#a98a5b; left:0; }
+  .seg-metal{ background:var(--primary); }
+  .seg-margin{ background:#dcd3c4; }
+  .capacity-bar-wrap.over-limit .seg-metal{ background:var(--error); }
+  .capacity-legend{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    margin-top:10px;
+    font-size:0.78rem;
+    color:var(--muted);
+  }
+  .capacity-legend span{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+  }
+  .legend-dot{
+    width:10px;
+    height:10px;
+    border-radius:3px;
+    display:inline-block;
+  }
+  .capacity-caption{
+    margin-top:8px;
+    font-size:0.8rem;
+    color:var(--muted);
+  }
+  .tree-viz-wrap{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+  .tree-svg-box{
+    background:#faf8f4;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:8px;
+  }
+  .tree-count-label{
+    font-size:1.4rem;
+    font-weight:700;
+    color:var(--primary-dark);
+  }
+  .tree-count-sub{
+    font-size:0.82rem;
+    color:var(--muted);
+    margin-top:2px;
+  }
+  .bom-hint{
+    margin:-6px 0 16px;
+    font-size:0.82rem;
+    color:var(--muted);
+  }
+  details#bomManager{
+    margin-top:4px;
+  }
+  details#bomManager summary{
+    cursor:pointer;
+    font-size:0.88rem;
+    font-weight:600;
+    color:var(--primary-dark);
+    padding:6px 0;
+  }
+  .bom-form{
+    margin-top:14px;
+    border-top:1px solid var(--border);
+    padding-top:16px;
+  }
+  .bom-form button{
+    width:auto;
+    padding:9px 18px;
+    font-size:0.88rem;
+    margin-bottom:6px;
+  }
+  .bom-error{
+    color:var(--error);
+    font-size:0.8rem;
+    min-height:1.1em;
+    margin-bottom:8px;
+  }
+  .bom-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.8rem;
+    margin-top:8px;
+  }
+  .bom-table th, .bom-table td{
+    border-bottom:1px solid var(--border);
+    padding:7px 6px;
+    text-align:left;
+  }
+  .bom-table th{
+    color:var(--muted);
+    font-weight:600;
+  }
+  .bom-table .del-btn{
+    width:auto;
+    padding:4px 10px;
+    font-size:0.75rem;
+    background:var(--error);
+  }
+  .bom-table .del-btn:hover{
+    background:#962d20;
+  }
+  .bom-table-empty{
+    color:var(--muted);
+    font-size:0.8rem;
+    padding:10px 0;
+  }
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:0.78rem;
+    margin-top:30px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Kalkulator Casting Perhiasan</h1>
+    <p>Hitung kebutuhan batang lilin (wax tree) untuk produksi</p>
+  </header>
+
+  <div class="card">
+    <h2>BOM Produk (Bill of Materials)</h2>
+    <p class="bom-hint">Simpan data standar produk supaya bisa dipilih otomatis saat input pesanan. Data tersimpan di browser ini.</p>
+
+    <div class="field">
+      <label for="bomSelect">Pilih dari BOM (opsional)</label>
+      <select id="bomSelect">
+        <option value="">-- Isi manual / pilih produk --</option>
+      </select>
+    </div>
+
+    <details id="bomManager">
+      <summary>Kelola Data BOM</summary>
+      <div class="bom-form">
+        <div class="row">
+          <div class="field">
+            <label for="bomName">Nama Produk</label>
+            <input type="text" id="bomName" placeholder="Contoh: Cincin Solitaire A1">
+          </div>
+          <div class="field">
+            <label for="bomSku">Kode / SKU (opsional)</label>
+            <input type="text" id="bomSku" placeholder="Contoh: RG-001">
+          </div>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="bomWaxWeight">Berat Lilin per Pcs (gram)</label>
+            <input type="number" id="bomWaxWeight" min="0.01" step="0.01" placeholder="Contoh: 2.5">
+          </div>
+          <div class="field">
+            <label for="bomMetalType">Jenis Logam Default</label>
+            <select id="bomMetalType">
+              <option value="">-- Pilih --</option>
+              <option value="10.5">Sterling Silver (SG 10.5)</option>
+              <option value="8.5">Brass / Kuningan (SG 8.5)</option>
+              <option value="15.5">18K Gold (SG 15.5)</option>
+              <option value="13.5">14K Gold (SG 13.5)</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="bomFlaskSize">Ukuran Flask Default</label>
+          <select id="bomFlaskSize">
+            <option value="">-- Pilih --</option>
+            <option value="300">3" x 3" (kapasitas 300g)</option>
+            <option value="500">3.5" x 4" (kapasitas 500g)</option>
+            <option value="800">4" x 6" (kapasitas 800g)</option>
+          </select>
+        </div>
+        <button type="button" id="bomAddBtn">Simpan ke BOM</button>
+        <div class="bom-error" id="bomError"></div>
+
+        <table class="bom-table" id="bomTable">
+          <thead>
+            <tr><th>Produk</th><th>SKU</th><th>Lilin (g)</th><th>Logam</th><th>Flask</th><th></th></tr>
+          </thead>
+          <tbody id="bomTableBody"></tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>Data Pesanan</h2>
+    <form id="calcForm" novalidate>
+      <div class="field" id="field-productType">
+        <label for="productType">Jenis Produk</label>
+        <input type="text" id="productType" placeholder="Contoh: Cincin, Kalung, Gelang">
+        <div class="error-msg">Jenis produk wajib diisi.</div>
+      </div>
+
+      <div class="row">
+        <div class="field" id="field-orderQty">
+          <label for="orderQty">Jumlah Pesanan (pcs)</label>
+          <input type="number" id="orderQty" min="1" step="1" placeholder="Contoh: 100">
+          <div class="error-msg">Jumlah pesanan harus berupa angka lebih dari 0.</div>
+        </div>
+        <div class="field" id="field-waxWeight">
+          <label for="waxWeight">Berat Lilin per Pcs (gram)</label>
+          <input type="number" id="waxWeight" min="0.01" step="0.01" placeholder="Contoh: 2.5">
+          <div class="error-msg">Berat lilin harus berupa angka lebih dari 0.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field" id="field-metalType">
+          <label for="metalType">Jenis Logam</label>
+          <select id="metalType">
+            <option value="">-- Pilih Jenis Logam --</option>
+            <option value="10.5">Sterling Silver (SG 10.5)</option>
+            <option value="8.5">Brass / Kuningan (SG 8.5)</option>
+            <option value="15.5">18K Gold (SG 15.5)</option>
+            <option value="13.5">14K Gold (SG 13.5)</option>
+          </select>
+          <div class="error-msg">Pilih jenis logam.</div>
+        </div>
+        <div class="field" id="field-flaskSize">
+          <label for="flaskSize">Ukuran Flask</label>
+          <select id="flaskSize">
+            <option value="">-- Pilih Ukuran Flask --</option>
+            <option value="300">3" x 3" (kapasitas 300g)</option>
+            <option value="500">3.5" x 4" (kapasitas 500g)</option>
+            <option value="800">4" x 6" (kapasitas 800g)</option>
+          </select>
+          <div class="error-msg">Pilih ukuran flask.</div>
+        </div>
+      </div>
+
+      <button type="submit">Hitung Kebutuhan Lilin</button>
+    </form>
+  </div>
+
+  <div class="card" id="resultSection">
+    <div class="result-title" id="resultTitle">Hasil Perhitungan</div>
+    <div id="resultWarning"></div>
+    <div class="result-grid">
+      <div class="result-item">
+        <div class="label">Berat Logam per Pcs</div>
+        <div class="value" id="outMetalPerPiece">-</div>
+      </div>
+      <div class="result-item">
+        <div class="label">Pcs per Batang Lilin</div>
+        <div class="value" id="outPiecesPerTree">-</div>
+      </div>
+      <div class="result-item">
+        <div class="label">Jumlah Batang Lilin Dibutuhkan</div>
+        <div class="value" id="outTreesNeeded">-</div>
+      </div>
+      <div class="result-item">
+        <div class="label">Total Logam Dibutuhkan</div>
+        <div class="value" id="outTotalMetal">-</div>
+      </div>
+    </div>
+    <div class="summary-box" id="outSummary"></div>
+
+    <div class="viz-section">
+      <div class="viz-block">
+        <h3>Kapasitas Mesin per Batang</h3>
+        <div class="capacity-bar-wrap" id="capacityBarWrap">
+          <div class="capacity-segment seg-sprue" id="segSprue"></div>
+          <div class="capacity-segment seg-metal" id="segMetal"></div>
+          <div class="capacity-segment seg-margin" id="segMargin"></div>
+        </div>
+        <div class="capacity-legend">
+          <span><span class="legend-dot" style="background:#a98a5b;"></span>Sprue (60 g)</span>
+          <span><span class="legend-dot" style="background:var(--primary);"></span>Logam terpakai</span>
+          <span><span class="legend-dot" style="background:#dcd3c4;"></span>Margin aman tidak terpakai</span>
+        </div>
+        <div class="capacity-caption" id="capacityCaption"></div>
+      </div>
+
+      <div class="viz-block">
+        <h3>Ilustrasi Pohon Lilin</h3>
+        <div class="tree-viz-wrap">
+          <div class="tree-svg-box" id="treeSvgBox"></div>
+          <div>
+            <div class="tree-count-label" id="treeCountLabel"></div>
+            <div class="tree-count-sub" id="treeCountSub"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Kalkulator internal produksi casting perhiasan</footer>
+</div>
+
+<script>
+const WAX_SG = 0.95;
+const SPRUE_WEIGHT = 60; // gram
+const SAFETY_MARGIN = 0.8;
+
+const form = document.getElementById('calcForm');
+const resultSection = document.getElementById('resultSection');
+
+function setError(fieldId, hasError){
+  const field = document.getElementById('field-' + fieldId);
+  field.classList.toggle('has-error', hasError);
+}
+
+function clearAllErrors(){
+  ['productType','orderQty','waxWeight','metalType','flaskSize'].forEach(id => setError(id, false));
+}
+
+function formatNumber(num, decimals = 2){
+  return num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: decimals });
+}
+
+const BOM_STORAGE_KEY = 'jewelryBomList';
+const metalLabels = { '10.5': 'Sterling Silver', '8.5': 'Brass', '15.5': '18K Gold', '13.5': '14K Gold' };
+const flaskLabels = { '300': '3" x 3"', '500': '3.5" x 4"', '800': '4" x 6"' };
+
+function loadBomList(){
+  try{
+    const raw = localStorage.getItem(BOM_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e){
+    return [];
+  }
+}
+
+function saveBomList(list){
+  localStorage.setItem(BOM_STORAGE_KEY, JSON.stringify(list));
+}
+
+function renderBomUI(){
+  const list = loadBomList();
+
+  const select = document.getElementById('bomSelect');
+  select.innerHTML = '<option value="">-- Isi manual / pilih produk --</option>';
+  list.forEach((item, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = item.name + (item.sku ? ' (' + item.sku + ')' : '');
+    select.appendChild(opt);
+  });
+
+  const tbody = document.getElementById('bomTableBody');
+  tbody.innerHTML = '';
+  if(list.length === 0){
+    tbody.innerHTML = '<tr><td colspan="6" class="bom-table-empty">Belum ada data BOM tersimpan.</td></tr>';
+    return;
+  }
+  list.forEach((item, idx) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + escapeHtml(item.name) + '</td>' +
+      '<td>' + escapeHtml(item.sku || '-') + '</td>' +
+      '<td>' + formatNumber(item.waxWeight) + '</td>' +
+      '<td>' + (metalLabels[item.metalSG] || '-') + '</td>' +
+      '<td>' + (flaskLabels[item.flaskCapacity] || '-') + '</td>' +
+      '<td><button type="button" class="del-btn" data-idx="' + idx + '">Hapus</button></td>';
+    tbody.appendChild(tr);
+  });
+
+  tbody.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', function(){
+      const i = parseInt(btn.getAttribute('data-idx'), 10);
+      const current = loadBomList();
+      current.splice(i, 1);
+      saveBomList(current);
+      renderBomUI();
+    });
+  });
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+document.getElementById('bomAddBtn').addEventListener('click', function(){
+  const name = document.getElementById('bomName').value.trim();
+  const sku = document.getElementById('bomSku').value.trim();
+  const waxWeight = parseFloat(document.getElementById('bomWaxWeight').value);
+  const metalSG = document.getElementById('bomMetalType').value;
+  const flaskCapacity = document.getElementById('bomFlaskSize').value;
+
+  const errorBox = document.getElementById('bomError');
+
+  if(!name || isNaN(waxWeight) || waxWeight <= 0 || !metalSG || !flaskCapacity){
+    errorBox.textContent = 'Lengkapi semua field (kecuali SKU) dengan nilai yang valid sebelum menyimpan.';
+    return;
+  }
+  errorBox.textContent = '';
+
+  const list = loadBomList();
+  list.push({ name, sku, waxWeight, metalSG, flaskCapacity });
+  saveBomList(list);
+
+  document.getElementById('bomName').value = '';
+  document.getElementById('bomSku').value = '';
+  document.getElementById('bomWaxWeight').value = '';
+  document.getElementById('bomMetalType').value = '';
+  document.getElementById('bomFlaskSize').value = '';
+
+  renderBomUI();
+});
+
+document.getElementById('bomSelect').addEventListener('change', function(){
+  const idx = this.value;
+  if(idx === ''){
+    return;
+  }
+  const list = loadBomList();
+  const item = list[parseInt(idx, 10)];
+  if(!item) return;
+
+  document.getElementById('productType').value = item.name;
+  document.getElementById('waxWeight').value = item.waxWeight;
+  document.getElementById('metalType').value = item.metalSG;
+  document.getElementById('flaskSize').value = item.flaskCapacity;
+});
+
+renderBomUI();
+
+function renderCapacityBar(machineCapacity, metalUsed){
+  const wrap = document.getElementById('capacityBarWrap');
+  const sprueW = (SPRUE_WEIGHT / machineCapacity) * 100;
+  const metalW = (metalUsed / machineCapacity) * 100;
+  const usedW = Math.min(sprueW + metalW, 100);
+  const marginW = Math.max(100 - usedW, 0);
+  const overLimit = (SPRUE_WEIGHT + metalUsed) > machineCapacity;
+
+  wrap.classList.toggle('over-limit', overLimit);
+
+  const segSprue = document.getElementById('segSprue');
+  const segMetal = document.getElementById('segMetal');
+  const segMargin = document.getElementById('segMargin');
+
+  segSprue.style.width = Math.min(sprueW, 100) + '%';
+  segMetal.style.left = Math.min(sprueW, 100) + '%';
+  segMetal.style.width = Math.min(metalW, 100 - Math.min(sprueW, 100)) + '%';
+  segMargin.style.left = usedW + '%';
+  segMargin.style.width = marginW + '%';
+
+  const caption = document.getElementById('capacityCaption');
+  const totalUsed = SPRUE_WEIGHT + metalUsed;
+  if(overLimit){
+    caption.textContent = 'Peringatan: total beban (' + formatNumber(totalUsed) + ' g) melebihi kapasitas mesin (' + formatNumber(machineCapacity) + ' g).';
+    caption.style.color = 'var(--error)';
+  } else {
+    caption.textContent = formatNumber(totalUsed) + ' g terpakai dari ' + formatNumber(machineCapacity) + ' g kapasitas mesin (margin aman 20% diperhitungkan).';
+    caption.style.color = '';
+  }
+}
+
+function renderWaxTree(piecesPerTree, treesNeeded){
+  const box = document.getElementById('treeSvgBox');
+  const width = 220, height = 280;
+  const trunkX = width / 2;
+  const trunkTop = 30;
+  const trunkBottom = height - 45;
+  const TREE_COLOR = '#3aa17e';
+  const TREE_DARK = '#1f6b4d';
+
+  const maxRingsForHeight = 6;
+  const piecesPerRingCap = 9;
+  let ringCount = Math.min(maxRingsForHeight, Math.max(1, Math.ceil(piecesPerTree / piecesPerRingCap)));
+
+  const piecesPerRing = Array(ringCount).fill(0);
+  for(let i = 0; i < piecesPerTree; i++){
+    piecesPerRing[i % ringCount]++;
+  }
+
+  let svg = '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">';
+
+  // base/stand
+  svg += '<ellipse cx="' + trunkX + '" cy="' + (height - 14) + '" rx="55" ry="12" fill="#2b2622"/>';
+
+  // trunk
+  svg += '<line x1="' + trunkX + '" y1="' + trunkTop + '" x2="' + trunkX + '" y2="' + (height - 18) + '" stroke="' + TREE_DARK + '" stroke-width="4" stroke-linecap="round"/>';
+  // knob on top
+  svg += '<circle cx="' + trunkX + '" cy="' + (trunkTop - 4) + '" r="6" fill="' + TREE_COLOR + '" stroke="' + TREE_DARK + '" stroke-width="1.5"/>';
+
+  const ringAreaTop = trunkTop + 30;
+  const ringAreaBottom = trunkBottom;
+  const ringSpacing = ringCount > 1 ? (ringAreaBottom - ringAreaTop) / (ringCount - 1) : 0;
+  const ringRx = 62, ringRy = 16;
+
+  for(let r = 0; r < ringCount; r++){
+    const ringY = ringCount > 1 ? ringAreaTop + r * ringSpacing : (ringAreaTop + ringAreaBottom) / 2;
+
+    // ring branch (ellipse viewed from the side)
+    svg += '<ellipse cx="' + trunkX + '" cy="' + ringY + '" rx="' + ringRx + '" ry="' + ringRy + '" fill="none" stroke="' + TREE_COLOR + '" stroke-width="3"/>';
+
+    const count = piecesPerRing[r];
+    for(let p = 0; p < count; p++){
+      const angle = (p / count) * Math.PI * 2 - Math.PI / 2;
+      const px = trunkX + ringRx * Math.cos(angle);
+      const py = ringY + ringRy * Math.sin(angle);
+      // small sprue connecting piece to ring
+      svg += '<line x1="' + (trunkX + (ringRx - 6) * Math.cos(angle)) + '" y1="' + (ringY + (ringRy - 2) * Math.sin(angle)) + '" x2="' + px + '" y2="' + py + '" stroke="' + TREE_COLOR + '" stroke-width="1.5"/>';
+      svg += '<circle cx="' + px + '" cy="' + py + '" r="3.5" fill="' + TREE_COLOR + '" stroke="' + TREE_DARK + '" stroke-width="1"/>';
+    }
+  }
+
+  svg += '</svg>';
+
+  box.innerHTML = svg;
+
+  document.getElementById('treeCountLabel').textContent = '× ' + formatNumber(treesNeeded, 0) + ' batang';
+  document.getElementById('treeCountSub').textContent = formatNumber(piecesPerTree, 0) + ' pcs per batang (ditampilkan 1 batang representatif)';
+}
+
+form.addEventListener('submit', function(e){
+  e.preventDefault();
+  clearAllErrors();
+
+  const productType = document.getElementById('productType').value.trim();
+  const orderQtyRaw = document.getElementById('orderQty').value;
+  const waxWeightRaw = document.getElementById('waxWeight').value;
+  const metalSGRaw = document.getElementById('metalType').value;
+  const machineCapacityRaw = document.getElementById('flaskSize').value;
+
+  let valid = true;
+
+  if(!productType){
+    setError('productType', true);
+    valid = false;
+  }
+
+  const orderQty = parseInt(orderQtyRaw, 10);
+  if(!orderQtyRaw || isNaN(orderQty) || orderQty <= 0){
+    setError('orderQty', true);
+    valid = false;
+  }
+
+  const waxWeight = parseFloat(waxWeightRaw);
+  if(!waxWeightRaw || isNaN(waxWeight) || waxWeight <= 0){
+    setError('waxWeight', true);
+    valid = false;
+  }
+
+  const metalSG = parseFloat(metalSGRaw);
+  if(!metalSGRaw || isNaN(metalSG)){
+    setError('metalType', true);
+    valid = false;
+  }
+
+  const machineCapacity = parseFloat(machineCapacityRaw);
+  if(!machineCapacityRaw || isNaN(machineCapacity)){
+    setError('flaskSize', true);
+    valid = false;
+  }
+
+  if(!valid){
+    resultSection.style.display = 'none';
+    return;
+  }
+
+  const metalPerPiece = waxWeight * (metalSG / WAX_SG);
+  const availableCapacity = (machineCapacity * SAFETY_MARGIN) - SPRUE_WEIGHT;
+
+  const warningBox = document.getElementById('resultWarning');
+  warningBox.innerHTML = '';
+
+  const vizSection = document.querySelector('.viz-section');
+
+  if(availableCapacity <= 0){
+    warningBox.innerHTML = '<div class="alert-warning">Kapasitas mesin terlalu kecil untuk berat batang sprue. Pilih ukuran flask yang lebih besar.</div>';
+    resultSection.style.display = 'block';
+    vizSection.style.display = 'none';
+    document.getElementById('outMetalPerPiece').textContent = formatNumber(metalPerPiece) + ' g';
+    document.getElementById('outPiecesPerTree').textContent = '-';
+    document.getElementById('outTreesNeeded').textContent = '-';
+    document.getElementById('outTotalMetal').textContent = '-';
+    document.getElementById('outSummary').textContent = '';
+    return;
+  }
+
+  const piecesPerTree = Math.floor(availableCapacity / metalPerPiece);
+
+  if(piecesPerTree <= 0){
+    warningBox.innerHTML = '<div class="alert-warning">Berat logam per pcs terlalu besar untuk kapasitas flask yang dipilih. Tidak ada pcs yang dapat dimuat dalam satu batang lilin.</div>';
+    resultSection.style.display = 'block';
+    vizSection.style.display = 'none';
+    document.getElementById('outMetalPerPiece').textContent = formatNumber(metalPerPiece) + ' g';
+    document.getElementById('outPiecesPerTree').textContent = '0';
+    document.getElementById('outTreesNeeded').textContent = '-';
+    document.getElementById('outTotalMetal').textContent = formatNumber(metalPerPiece * orderQty) + ' g';
+    document.getElementById('outSummary').textContent = '';
+    return;
+  }
+
+  vizSection.style.display = 'block';
+
+  const treesNeeded = Math.ceil(orderQty / piecesPerTree);
+  const totalMetal = metalPerPiece * orderQty;
+  const totalPiecesCapacity = treesNeeded * piecesPerTree;
+
+  document.getElementById('resultTitle').textContent = 'Hasil Perhitungan — ' + productType;
+  document.getElementById('outMetalPerPiece').textContent = formatNumber(metalPerPiece) + ' g';
+  document.getElementById('outPiecesPerTree').textContent = formatNumber(piecesPerTree, 0) + ' pcs';
+  document.getElementById('outTreesNeeded').textContent = formatNumber(treesNeeded, 0) + ' batang';
+  document.getElementById('outTotalMetal').textContent = formatNumber(totalMetal) + ' g';
+  document.getElementById('outSummary').textContent =
+    treesNeeded + ' batang × ' + piecesPerTree + ' pcs = ' + totalPiecesCapacity + ' pcs (pesanan: ' + orderQty + ' pcs)';
+
+  renderCapacityBar(machineCapacity, metalPerPiece * piecesPerTree);
+  renderWaxTree(piecesPerTree, treesNeeded);
+
+  resultSection.style.display = 'block';
+  resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+</script>
+</body>
+</html>

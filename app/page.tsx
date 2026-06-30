@@ -44,16 +44,16 @@ export default function Dashboard() {
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link
-            href="/som"
+            href="/som/baru"
             className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:bg-gold-strong"
           >
-            Lihat Order (SOM)
+            + Buat SOM
           </Link>
           <Link
-            href="/som/baru"
+            href="/som"
             className="rounded-lg border border-white/20 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/10"
           >
-            + Buat SOM
+            Lihat Order (SOM)
           </Link>
         </div>
       </div>

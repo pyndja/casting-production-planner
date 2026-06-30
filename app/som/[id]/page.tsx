@@ -2,27 +2,53 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import type { Som } from "@/lib/types";
-import { getSomById } from "@/lib/store";
+import { getSomById, isCustomSom, deleteSom } from "@/lib/store";
 import { PRODUCT_MAP } from "@/data";
 import { aggregateSom, type SomCastingSummary } from "@/lib/casting";
 import { formatDate, formatGram, formatInt } from "@/lib/format";
-import { PageHeader, Badge, Card, Section } from "@/components/ui";
+import { PageHeader, Badge, Card, Section, Skeleton } from "@/components/ui";
+import { toast } from "@/lib/toast";
 
 export default function SomDetailPage() {
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const [som, setSom] = useState<Som | null | undefined>(undefined);
   const [summary, setSummary] = useState<SomCastingSummary | null>(null);
+  const [custom, setCustom] = useState(false);
 
   useEffect(() => {
     const found = getSomById(params.id);
     setSom(found ?? null);
+    setCustom(isCustomSom(params.id));
     if (found) setSummary(aggregateSom(found, PRODUCT_MAP));
   }, [params.id]);
 
+  function onDelete() {
+    if (!som) return;
+    if (!confirm(`Hapus ${som.orderNo}? Tindakan ini tidak bisa dibatalkan.`)) {
+      return;
+    }
+    deleteSom(som.id);
+    toast(`${som.orderNo} dihapus.`, "info");
+    router.push("/som");
+  }
+
   if (som === undefined) {
-    return <p className="text-muted">Memuat…</p>;
+    return (
+      <div>
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="mt-6 h-9 w-64" />
+        <Skeleton className="mt-3 h-4 w-80" />
+        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-20" />
+          ))}
+        </div>
+        <Skeleton className="mt-8 h-48 w-full" />
+      </div>
+    );
   }
   if (som === null) {
     return (
@@ -48,6 +74,25 @@ export default function SomDetailPage() {
         eyebrow="Surat Order Marketing"
         title={som.orderNo}
         description={`${som.customer} · ${formatDate(som.date)}`}
+        action={
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/som/baru?from=${som.id}`}
+              className="rounded-lg border border-border px-3 py-2 text-sm font-medium text-ink transition-colors hover:border-gold/50 hover:bg-gold-soft/40"
+            >
+              Duplikat
+            </Link>
+            {custom && (
+              <button
+                type="button"
+                onClick={onDelete}
+                className="rounded-lg border border-border px-3 py-2 text-sm text-muted transition-colors hover:border-red-300 hover:text-red-600"
+              >
+                Hapus
+              </button>
+            )}
+          </div>
+        }
       />
 
       {summary && (
@@ -56,7 +101,7 @@ export default function SomDetailPage() {
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Stat label="Total pohon lilin" value={formatInt(summary.grandTotalTrees)} accent />
               <Stat label="Total pcs" value={formatInt(summary.grandTotalPieces)} />
-              <Stat label="Total batu" value={formatInt(summary.totalStones)} />
+              <Stat label="Total batu" value={`${formatInt(summary.totalStones)} butir`} />
               <Stat
                 label="Run casting"
                 value={`${summary.groups.length} batch`}
@@ -89,45 +134,49 @@ export default function SomDetailPage() {
                     </div>
                   </div>
 
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-xs text-muted">
-                        <th className="py-1 font-medium">Produk</th>
-                        <th className="py-1 font-medium">Qty</th>
-                        <th className="py-1 font-medium">g/pcs</th>
-                        <th className="py-1 font-medium">pcs/pohon</th>
-                        <th className="py-1 font-medium">Pohon</th>
-                        <th className="py-1"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {g.lines.map((ln) => (
-                        <tr key={ln.product.id} className="border-t border-border">
-                          <td className="py-2 font-medium text-ink">
-                            {ln.product.name}
-                          </td>
-                          <td className="py-2">{formatInt(ln.quantity)}</td>
-                          <td className="py-2">
-                            {formatGram(ln.result!.metalPerPiece)}
-                          </td>
-                          <td className="py-2">
-                            {formatInt(ln.result!.piecesPerTree)}
-                          </td>
-                          <td className="py-2 font-semibold text-gold-strong">
-                            {formatInt(ln.result!.treesNeeded)}
-                          </td>
-                          <td className="py-2 text-right">
-                            <Link
-                              href={`/som/${som.id}/mo/${ln.product.id}`}
-                              className="text-xs text-gold-strong hover:underline"
-                            >
-                              Lihat MO →
-                            </Link>
-                          </td>
+                  <div className="-mx-1 overflow-x-auto px-1">
+                    <table className="w-full min-w-[34rem] text-sm">
+                      <thead>
+                        <tr className="text-left text-xs text-muted">
+                          <th className="py-1 font-medium">Produk</th>
+                          <th className="py-1 font-medium whitespace-nowrap">Qty</th>
+                          <th className="py-1 font-medium whitespace-nowrap">g/pcs</th>
+                          <th className="py-1 font-medium whitespace-nowrap">pcs/pohon</th>
+                          <th className="py-1 font-medium whitespace-nowrap">Pohon</th>
+                          <th className="py-1"></th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {g.lines.map((ln) => (
+                          <tr key={ln.product.id} className="border-t border-border">
+                            <td className="py-2 font-medium text-ink">
+                              {ln.product.name}
+                            </td>
+                            <td className="py-2 whitespace-nowrap">
+                              {formatInt(ln.quantity)}
+                            </td>
+                            <td className="py-2 whitespace-nowrap">
+                              {formatGram(ln.result!.metalPerPiece)}
+                            </td>
+                            <td className="py-2 whitespace-nowrap">
+                              {formatInt(ln.result!.piecesPerTree)}
+                            </td>
+                            <td className="py-2 font-semibold text-gold-strong whitespace-nowrap">
+                              {formatInt(ln.result!.treesNeeded)}
+                            </td>
+                            <td className="py-2 text-right whitespace-nowrap">
+                              <Link
+                                href={`/som/${som.id}/mo/${ln.product.id}`}
+                                className="text-xs text-gold-strong hover:underline"
+                              >
+                                Lihat MO →
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </Card>
               ))}
             </div>

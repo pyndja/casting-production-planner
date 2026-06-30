@@ -12,7 +12,7 @@ export function PageHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-8 flex items-end justify-between gap-4">
+    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
         {eyebrow && (
           <div className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-gold-strong">
@@ -25,7 +25,7 @@ export function PageHeader({
           <p className="mt-2 max-w-2xl text-muted">{description}</p>
         )}
       </div>
-      {action}
+      {action && <div className="shrink-0 whitespace-nowrap">{action}</div>}
     </div>
   );
 }
@@ -81,6 +81,37 @@ export function LinkCard({
     >
       {children}
     </Link>
+  );
+}
+
+export function Skeleton({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={`animate-pulse rounded-lg bg-border/60 ${className}`}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description?: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-dashed border-border bg-surface/60 px-6 py-12 text-center">
+      <p className="font-serif text-lg font-semibold text-ink">{title}</p>
+      {description && (
+        <p className="mx-auto mt-1.5 max-w-md text-sm text-muted">
+          {description}
+        </p>
+      )}
+      {action && <div className="mt-5 flex justify-center">{action}</div>}
+    </div>
   );
 }
 

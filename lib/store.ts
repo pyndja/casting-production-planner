@@ -27,6 +27,15 @@ export function addSom(som: Som): void {
   localStorage.setItem(KEY, JSON.stringify(list));
 }
 
+export function deleteSom(id: string): void {
+  const list = getCustomSoms().filter((s) => s.id !== id);
+  localStorage.setItem(KEY, JSON.stringify(list));
+}
+
+export function clearCustomSoms(): void {
+  localStorage.removeItem(KEY);
+}
+
 export function isCustomSom(id: string): boolean {
   return getCustomSoms().some((s) => s.id === id);
 }

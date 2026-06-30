@@ -34,7 +34,9 @@ export default function RoutingPage() {
                     {step.name}
                   </span>
                   {i < r.steps.length - 1 && (
-                    <span className="mx-1 text-muted">→</span>
+                    <span className="mx-1 text-muted" aria-hidden="true">
+                      →
+                    </span>
                   )}
                 </div>
               ))}

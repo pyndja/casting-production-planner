@@ -18,11 +18,12 @@ export function WaxTreeSVG({
   piecesPerTree,
   treesNeeded,
   width = 220,
-  height = 280,
+  height = 296,
 }: WaxTreeSVGProps) {
   const trunkX = width / 2;
   const trunkTop = 30;
-  const trunkBottom = height - 45;
+  const baseY = height - 28;
+  const trunkBottom = baseY - 26;
 
   const maxRings = 6;
   const perRingCap = 9;
@@ -52,14 +53,14 @@ export function WaxTreeSVG({
       aria-label={`Pohon lilin dengan ${piecesPerTree} pcs`}
     >
       {/* base / stand */}
-      <ellipse cx={trunkX} cy={height - 14} rx={55} ry={12} fill="#1a1a1a" />
+      <ellipse cx={trunkX} cy={baseY} rx={55} ry={12} fill="#1a1a1a" />
 
       {/* trunk */}
       <line
         x1={trunkX}
         y1={trunkTop}
         x2={trunkX}
-        y2={height - 18}
+        y2={baseY - 4}
         stroke={TREE_DARK}
         strokeWidth={4}
         strokeLinecap="round"
@@ -128,10 +129,10 @@ export function WaxTreeSVG({
       {treesNeeded != null && (
         <text
           x={trunkX}
-          y={height - 2}
+          y={height - 6}
           textAnchor="middle"
           fontSize={11}
-          fill="#6b6358"
+          fill="#5b5347"
         >
           × {formatInt(treesNeeded)} pohon
         </text>

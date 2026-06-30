@@ -7,12 +7,15 @@ import { getAllSoms } from "@/lib/store";
 import { PRODUCTS, PRODUCT_MAP, ROUTINGS } from "@/data";
 import { aggregateSom } from "@/lib/casting";
 import { formatDate, formatInt } from "@/lib/format";
+import { Skeleton } from "@/components/ui";
 
 export default function Dashboard() {
   const [soms, setSoms] = useState<Som[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     setSoms(getAllSoms());
+    setLoaded(true);
   }, []);
 
   const totalTrees = soms.reduce(
@@ -57,10 +60,17 @@ export default function Dashboard() {
 
       {/* KPI */}
       <div className="mb-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Kpi label="Order (SOM)" value={formatInt(soms.length)} />
+        <Kpi label="Order (SOM)" value={loaded ? formatInt(soms.length) : null} />
         <Kpi label="Produk" value={formatInt(PRODUCTS.length)} />
-        <Kpi label="Total pcs dipesan" value={formatInt(totalPcs)} />
-        <Kpi label="Total pohon lilin" value={formatInt(totalTrees)} accent />
+        <Kpi
+          label="Total pcs dipesan"
+          value={loaded ? formatInt(totalPcs) : null}
+        />
+        <Kpi
+          label="Total pohon lilin"
+          value={loaded ? formatInt(totalTrees) : null}
+          accent
+        />
       </div>
 
       {/* Recent SOM */}
@@ -75,7 +85,12 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="space-y-3">
-            {soms.slice(0, 4).map((som) => {
+            {!loaded &&
+              [0, 1, 2].map((i) => (
+                <Skeleton key={i} className="h-[4.5rem] w-full" />
+              ))}
+            {loaded &&
+              soms.slice(0, 4).map((som) => {
               const pcs = som.lines.reduce((a, l) => a + l.quantity, 0);
               const trees = aggregateSom(som, PRODUCT_MAP).grandTotalTrees;
               return (
@@ -103,8 +118,16 @@ export default function Dashboard() {
                 </Link>
               );
             })}
-            {soms.length === 0 && (
-              <p className="text-sm text-muted">Belum ada order.</p>
+            {loaded && soms.length === 0 && (
+              <div className="rounded-xl border border-dashed border-border bg-surface/60 px-5 py-8 text-center">
+                <p className="text-sm text-muted">Belum ada order.</p>
+                <Link
+                  href="/som/baru"
+                  className="mt-3 inline-block rounded-lg bg-ink px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-ink/90"
+                >
+                  + Buat SOM pertama
+                </Link>
+              </div>
             )}
           </div>
         </div>
@@ -138,7 +161,7 @@ function Kpi({
   accent,
 }: {
   label: string;
-  value: string;
+  value: string | null;
   accent?: boolean;
 }) {
   return (
@@ -148,9 +171,13 @@ function Kpi({
       }`}
     >
       <div className="text-xs uppercase tracking-wide text-muted">{label}</div>
-      <div className="mt-2 font-serif text-3xl font-semibold text-ink">
-        {value}
-      </div>
+      {value === null ? (
+        <Skeleton className="mt-3 h-8 w-16" />
+      ) : (
+        <div className="mt-2 font-serif text-3xl font-semibold text-ink">
+          {value}
+        </div>
+      )}
     </div>
   );
 }

@@ -8,7 +8,7 @@ import { getSomById } from "@/lib/store";
 import { getProduct, getRoutingForProduct } from "@/data";
 import { calculateProductCasting, type ProductCastingResult } from "@/lib/casting";
 import { formatInt } from "@/lib/format";
-import { PageHeader, Badge, Card, Section } from "@/components/ui";
+import { PageHeader, Badge, Card, Section, Skeleton } from "@/components/ui";
 import { CastingResultCard } from "@/components/CastingResultCard";
 
 export default function MoPage() {
@@ -28,7 +28,17 @@ export default function MoPage() {
     }
   }, [params.id, params.productId]);
 
-  if (som === undefined) return <p className="text-muted">Memuat…</p>;
+  if (som === undefined) {
+    return (
+      <div>
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="mt-6 h-9 w-72" />
+        <Skeleton className="mt-3 h-4 w-96 max-w-full" />
+        <Skeleton className="mt-8 h-16 w-full" />
+        <Skeleton className="mt-6 h-72 w-full" />
+      </div>
+    );
+  }
   if (som === null || !pc) {
     return (
       <div>
@@ -73,7 +83,9 @@ export default function MoPage() {
                   {step.name}
                 </span>
                 {i < routing.steps.length - 1 && (
-                  <span className="mx-1 text-muted">→</span>
+                  <span className="mx-1 text-muted" aria-hidden="true">
+                    →
+                  </span>
                 )}
               </div>
             ))}

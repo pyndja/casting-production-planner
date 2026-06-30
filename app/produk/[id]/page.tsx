@@ -68,30 +68,32 @@ export default async function ProdukDetailPage({
                 <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted">
                   Rincian Batu
                 </div>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-left text-xs text-muted">
-                      <th className="py-1 font-medium">Jenis</th>
-                      <th className="py-1 font-medium">Jumlah</th>
-                      <th className="py-1 font-medium">Ukuran</th>
-                      <th className="py-1 font-medium">Total ct</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {product.bom.stones.map((st, i) => (
-                      <tr key={i} className="border-t border-border">
-                        <td className="py-1.5">{st.type}</td>
-                        <td className="py-1.5">{st.count}</td>
-                        <td className="py-1.5">
-                          {st.sizeMm ? `${st.sizeMm} mm` : "-"}
-                        </td>
-                        <td className="py-1.5">
-                          {st.totalCarat ? `${st.totalCarat} ct` : "-"}
-                        </td>
+                <div className="-mx-1 overflow-x-auto px-1">
+                  <table className="w-full min-w-[22rem] text-sm">
+                    <thead>
+                      <tr className="text-left text-xs text-muted">
+                        <th className="py-1 font-medium">Jenis</th>
+                        <th className="py-1 font-medium whitespace-nowrap">Jumlah</th>
+                        <th className="py-1 font-medium whitespace-nowrap">Ukuran</th>
+                        <th className="py-1 font-medium whitespace-nowrap">Total ct</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {product.bom.stones.map((st, i) => (
+                        <tr key={i} className="border-t border-border">
+                          <td className="py-1.5">{st.type}</td>
+                          <td className="py-1.5 whitespace-nowrap">{st.count}</td>
+                          <td className="py-1.5 whitespace-nowrap">
+                            {st.sizeMm ? `${st.sizeMm} mm` : "-"}
+                          </td>
+                          <td className="py-1.5 whitespace-nowrap">
+                            {st.totalCarat ? `${st.totalCarat} ct` : "-"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 

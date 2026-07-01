@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ROUTINGS } from "@/data";
 import { CATEGORY_LABELS } from "@/lib/types";
 import { PageHeader, Badge, Card } from "@/components/ui";
@@ -5,6 +6,13 @@ import { PageHeader, Badge, Card } from "@/components/ui";
 export default function RoutingPage() {
   return (
     <div>
+      <Link
+        href="/"
+        className="mb-4 inline-block text-sm text-muted hover:text-gold-strong"
+      >
+        ← Kembali ke Dashboard
+      </Link>
+
       <PageHeader
         eyebrow="Master Data"
         title="Routing Produksi"

@@ -249,6 +249,115 @@ export function distributeTreePieces(
   return perTree;
 }
 
+// ===== Insight efisiensi (estimasi, bukan kalkulasi resmi MO) =====
+
+export interface EfficiencyInsight {
+  currentTrees: number;
+  theoreticalMinTrees: number;
+  potentialSavings: number; // currentTrees - theoreticalMinTrees, selalu >= 0
+}
+
+/**
+ * Estimasi batas bawah teoretis jumlah batang untuk satu grup (metal×flask),
+ * dihitung dari total berat logam dibagi kapasitas aman per batang — seolah
+ * semua sisa kapasitas antar produk bisa dipadatkan sempurna. Ini cuma
+ * insight/estimasi (bukan pengganti totalTrees per-produk yang dipakai untuk
+ * MO), karena belum memperhitungkan tata letak fisik pcs di flask.
+ */
+export function calculateEfficiencyInsight(
+  group: SomCastingGroup,
+): EfficiencyInsight {
+  const availableCapacity = group.flask.capacity * SAFETY_MARGIN - SPRUE_WEIGHT;
+  const theoreticalMinTrees =
+    availableCapacity > 0
+      ? Math.ceil(group.totalMetal / availableCapacity)
+      : group.totalTrees;
+
+  return {
+    currentTrees: group.totalTrees,
+    theoreticalMinTrees,
+    potentialSavings: Math.max(0, group.totalTrees - theoreticalMinTrees),
+  };
+}
+
+export interface LeftoverBatch {
+  productId: string;
+  productName: string;
+  pieces: number;
+  metalPerPiece: number;
+  weight: number;
+}
+
+export interface CombinedTreeSuggestion {
+  batches: LeftoverBatch[];
+  totalPieces: number;
+  totalWeight: number;
+}
+
+export interface GroupMergeSuggestion {
+  originalLeftoverTreeCount: number;
+  combinedTrees: CombinedTreeSuggestion[];
+  treesSaved: number;
+}
+
+/**
+ * Saran konkret (bisa langsung diterapkan): kumpulkan sisa pcs dari batang
+ * terakhir tiap produk (yang tidak penuh) dalam grup metal×flask yang sama,
+ * lalu padatkan pakai bin-packing greedy (first-fit, terbesar dulu) ke
+ * batang gabungan sesedikit mungkin. Batang yang sudah penuh tidak diutak-
+ * atik — hanya sisa yang dipadatkan. Return null kalau tidak ada peluang
+ * penggabungan (kurang dari 2 sisa, atau tidak ada penghematan nyata).
+ *
+ * `excludeProductIds` — produk yang sisanya sudah dipakai di MO Gabungan
+ * yang sudah dibuat sebelumnya, supaya tidak disarankan ulang.
+ */
+export function suggestLeftoverMerge(
+  group: SomCastingGroup,
+  excludeProductIds?: Set<string>,
+): GroupMergeSuggestion | null {
+  const availableCapacity = group.flask.capacity * SAFETY_MARGIN - SPRUE_WEIGHT;
+  if (availableCapacity <= 0) return null;
+
+  const leftovers: LeftoverBatch[] = [];
+  for (const line of group.lines) {
+    if (!line.result) continue;
+    if (excludeProductIds?.has(line.product.id)) continue;
+    const { piecesPerTree, treesNeeded, metalPerPiece } = line.result;
+    const perTree = distributeTreePieces(line.quantity, piecesPerTree, treesNeeded);
+    const last = perTree[perTree.length - 1];
+    if (last != null && last < piecesPerTree) {
+      leftovers.push({
+        productId: line.product.id,
+        productName: line.product.name,
+        pieces: last,
+        metalPerPiece,
+        weight: last * metalPerPiece,
+      });
+    }
+  }
+
+  if (leftovers.length < 2) return null;
+
+  // First-fit, terbesar dulu — cukup untuk jumlah produk kecil khas SOM.
+  const sorted = [...leftovers].sort((a, b) => b.weight - a.weight);
+  const bins: CombinedTreeSuggestion[] = [];
+  for (const batch of sorted) {
+    const bin = bins.find((b) => b.totalWeight + batch.weight <= availableCapacity);
+    if (bin) {
+      bin.batches.push(batch);
+      bin.totalWeight += batch.weight;
+      bin.totalPieces += batch.pieces;
+    } else {
+      bins.push({ batches: [batch], totalWeight: batch.weight, totalPieces: batch.pieces });
+    }
+  }
+
+  const treesSaved = leftovers.length - bins.length;
+  if (treesSaved <= 0) return null;
+
+  return { originalLeftoverTreeCount: leftovers.length, combinedTrees: bins, treesSaved };
+}
+
 /** Helper agregat langsung dari daftar produk (tanpa objek SOM). */
 export function aggregateLines(
   lines: SomLine[],

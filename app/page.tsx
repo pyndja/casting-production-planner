@@ -6,8 +6,16 @@ import type { Som } from "@/lib/types";
 import { getAllSoms } from "@/lib/store";
 import { PRODUCTS, PRODUCT_MAP, ROUTINGS } from "@/data";
 import { aggregateSom } from "@/lib/casting";
+import { getTreeSavingsForSom } from "@/lib/mergeStore";
 import { formatDate, formatInt } from "@/lib/format";
 import { Skeleton } from "@/components/ui";
+
+/** Total pohon lilin SOM ini setelah dikurangi hemat dari MO Gabungan. */
+function adjustedTrees(som: Som): number {
+  return (
+    aggregateSom(som, PRODUCT_MAP).grandTotalTrees - getTreeSavingsForSom(som.id)
+  );
+}
 
 export default function Dashboard() {
   const [soms, setSoms] = useState<Som[]>([]);
@@ -18,10 +26,7 @@ export default function Dashboard() {
     setLoaded(true);
   }, []);
 
-  const totalTrees = soms.reduce(
-    (sum, s) => sum + aggregateSom(s, PRODUCT_MAP).grandTotalTrees,
-    0,
-  );
+  const totalTrees = soms.reduce((sum, s) => sum + adjustedTrees(s), 0);
   const totalPcs = soms.reduce(
     (sum, s) => sum + s.lines.reduce((a, l) => a + l.quantity, 0),
     0,
@@ -92,7 +97,7 @@ export default function Dashboard() {
             {loaded &&
               soms.slice(0, 4).map((som) => {
               const pcs = som.lines.reduce((a, l) => a + l.quantity, 0);
-              const trees = aggregateSom(som, PRODUCT_MAP).grandTotalTrees;
+              const trees = adjustedTrees(som);
               return (
                 <Link
                   key={som.id}

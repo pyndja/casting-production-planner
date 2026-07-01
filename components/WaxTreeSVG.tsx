@@ -5,6 +5,12 @@ interface WaxTreeSVGProps {
   treesNeeded?: number;
   width?: number;
   height?: number;
+  /**
+   * Warna per pcs (urut sesuai pcs ditambahkan) — untuk memvisualisasikan
+   * batang gabungan lintas produk. Panjang idealnya = piecesPerTree; index
+   * yang tidak ada fallback ke warna default.
+   */
+  pieceColors?: string[];
 }
 
 const TREE_COLOR = "#c8a64b";
@@ -21,6 +27,7 @@ export function WaxTreeSVG({
   treesNeeded,
   width = 220,
   height = 296,
+  pieceColors,
 }: WaxTreeSVGProps) {
   // Skala seluruh elemen relatif terhadap ukuran dasar 220×296, supaya
   // komponen ini tetap proporsional saat dirender kecil (grid multi-batang).
@@ -48,9 +55,13 @@ export function WaxTreeSVG({
     ringCount > 1 ? (ringAreaBottom - ringAreaTop) / (ringCount - 1) : 0;
   const ringRx = 62 * scale;
   const ringRy = 16 * scale;
-  const dotR = Math.max(1.5, 3.5 * scale);
+  // Saat mewarnai per produk, tebalkan ring & perbesar titik supaya beda
+  // warna tetap jelas terbaca meski di ukuran kecil (mis. untuk pengguna
+  // yang kurang sensitif ke variasi warna pastel).
+  const emphasis = pieceColors ? 1.6 : 1;
+  const dotR = Math.max(1.5, 3.5 * scale * emphasis);
   const strokeThin = Math.max(0.75, 1.5 * scale);
-  const strokeMed = Math.max(1, 3 * scale);
+  const strokeMed = Math.max(1, 3 * scale * emphasis);
   const strokeTrunk = Math.max(1.5, 4 * scale);
 
   return (
@@ -95,6 +106,10 @@ export function WaxTreeSVG({
           ringCount > 1
             ? ringAreaTop + r * ringSpacing
             : (ringAreaTop + ringAreaBottom) / 2;
+        // Pcs pertama yang ditaruh di ring ini selalu index global `r` —
+        // dipakai mewarnai seluruh cabang (ellipse), bukan cuma titiknya,
+        // supaya beda produk jelas terlihat dari jauh.
+        const ringColor = pieceColors?.[r] ?? TREE_COLOR;
 
         const dots = [];
         for (let p = 0; p < count; p++) {
@@ -103,6 +118,8 @@ export function WaxTreeSVG({
           const py = ringY + ringRy * Math.sin(angle);
           const ix = trunkX + (ringRx - 6 * scale) * Math.cos(angle);
           const iy = ringY + (ringRy - 2 * scale) * Math.sin(angle);
+          const globalIndex = r === ringCount - 1 ? r + p : r;
+          const dotColor = pieceColors?.[globalIndex] ?? TREE_COLOR;
           dots.push(
             <g key={p}>
               <line
@@ -110,14 +127,14 @@ export function WaxTreeSVG({
                 y1={iy}
                 x2={px}
                 y2={py}
-                stroke={TREE_COLOR}
+                stroke={dotColor}
                 strokeWidth={strokeThin}
               />
               <circle
                 cx={px}
                 cy={py}
                 r={dotR}
-                fill={TREE_COLOR}
+                fill={dotColor}
                 stroke={TREE_DARK}
                 strokeWidth={strokeThin * 0.7}
               />
@@ -133,7 +150,7 @@ export function WaxTreeSVG({
               rx={ringRx}
               ry={ringRy}
               fill="none"
-              stroke={TREE_COLOR}
+              stroke={ringColor}
               strokeWidth={strokeMed}
             />
             {dots}

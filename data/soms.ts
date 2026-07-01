@@ -23,4 +23,17 @@ export const SOMS: Som[] = [
       { productId: "prd-gelang-bangle", quantity: 40, flaskSizeId: "4x6" },
     ],
   },
+  {
+    id: "som-2026-003",
+    orderNo: "SOM-2026-003",
+    customer: "Toko Berkat Mulia — Bandung",
+    date: "2026-06-28",
+    // Sengaja disusun agar Cincin Solitaire (sisa 1 pcs) & Cincin Pita
+    // (sisa 2 pcs) sama-sama tidak penuh di batang terakhirnya — demo tetap
+    // untuk fitur "insight efisiensi" (Level 1 & 2) tanpa perlu buat SOM baru.
+    lines: [
+      { productId: "prd-cincin-solitaire", quantity: 49 },
+      { productId: "prd-cincin-pita", quantity: 32 },
+    ],
+  },
 ];

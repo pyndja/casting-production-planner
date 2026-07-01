@@ -8,6 +8,13 @@ import { PageHeader, Badge } from "@/components/ui";
 export default function ProdukPage() {
   return (
     <div>
+      <Link
+        href="/"
+        className="mb-4 inline-block text-sm text-muted hover:text-gold-strong"
+      >
+        ← Kembali ke Dashboard
+      </Link>
+
       <PageHeader
         eyebrow="Master Data"
         title="Produk & BOM"

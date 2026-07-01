@@ -9,6 +9,7 @@ import {
   deleteSom,
   clearCustomSoms,
 } from "@/lib/store";
+import { getAllCombinedMos, clearAllCombinedMos } from "@/lib/mergeStore";
 import { PRODUCT_MAP } from "@/data";
 import { formatDate, formatInt } from "@/lib/format";
 import { PageHeader, Badge, Skeleton } from "@/components/ui";
@@ -17,11 +18,13 @@ import { toast } from "@/lib/toast";
 export default function SomListPage() {
   const [soms, setSoms] = useState<Som[]>([]);
   const [customIds, setCustomIds] = useState<Set<string>>(new Set());
+  const [hasCombinedMos, setHasCombinedMos] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
   function refresh() {
     setSoms(getAllSoms());
     setCustomIds(new Set(getCustomSoms().map((s) => s.id)));
+    setHasCombinedMos(getAllCombinedMos().length > 0);
   }
 
   useEffect(() => {
@@ -39,25 +42,38 @@ export default function SomListPage() {
   }
 
   function onReset() {
-    if (!confirm("Hapus semua SOM demo yang kamu buat? Data seed tetap aman.")) {
+    if (
+      !confirm(
+        "Reset demo? Ini akan menghapus semua SOM demo yang kamu buat DAN semua MO Gabungan yang sudah dibuat (termasuk di SOM contoh) — semua kembali ke kondisi awal.",
+      )
+    ) {
       return;
     }
     clearCustomSoms();
+    clearAllCombinedMos();
     refresh();
-    toast("Data demo direset.", "info");
+    toast("Data demo & MO Gabungan direset.", "info");
   }
 
   const hasCustom = customIds.size > 0;
+  const showReset = hasCustom || hasCombinedMos;
 
   return (
     <div>
+      <Link
+        href="/"
+        className="mb-4 inline-block text-sm text-muted hover:text-gold-strong"
+      >
+        ← Kembali ke Dashboard
+      </Link>
+
       <PageHeader
         eyebrow="Order"
         title="Surat Order Marketing"
         description="Daftar order. Pilih SOM untuk melihat kalkulasi kebutuhan casting agregat."
         action={
           <div className="flex items-center gap-2">
-            {hasCustom && (
+            {showReset && (
               <button
                 type="button"
                 onClick={onReset}

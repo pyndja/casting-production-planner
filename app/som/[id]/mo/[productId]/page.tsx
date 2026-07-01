@@ -7,7 +7,8 @@ import type { Som } from "@/lib/types";
 import { getSomById } from "@/lib/store";
 import { getProduct, getRoutingForProduct } from "@/data";
 import { calculateProductCasting, type ProductCastingResult } from "@/lib/casting";
-import { formatInt } from "@/lib/format";
+import { getCombinedMosForSom, type CreatedCombinedMo } from "@/lib/mergeStore";
+import { formatGram, formatInt } from "@/lib/format";
 import { PageHeader, Badge, Card, Section, Skeleton } from "@/components/ui";
 import { CastingResultCard } from "@/components/CastingResultCard";
 
@@ -15,6 +16,7 @@ export default function MoPage() {
   const params = useParams<{ id: string; productId: string }>();
   const [som, setSom] = useState<Som | null | undefined>(undefined);
   const [pc, setPc] = useState<ProductCastingResult | null>(null);
+  const [mergedInto, setMergedInto] = useState<CreatedCombinedMo | null>(null);
 
   useEffect(() => {
     const found = getSomById(params.id);
@@ -25,6 +27,10 @@ export default function MoPage() {
       if (line && product) {
         setPc(calculateProductCasting(product, line.quantity, line.flaskSizeId));
       }
+      const mo = getCombinedMosForSom(found.id).find((m) =>
+        m.batches.some((b) => b.productId === params.productId),
+      );
+      setMergedInto(mo ?? null);
     }
   }, [params.id, params.productId]);
 
@@ -52,6 +58,25 @@ export default function MoPage() {
 
   const routing = getRoutingForProduct(pc.product);
   const voucherNo = `MO-${som.orderNo.replace("SOM-", "")}-${pc.product.sku}`;
+
+  const mergedBatch = mergedInto?.batches.find(
+    (b) => b.productId === params.productId,
+  );
+  // Kalau sisa batang terakhir sudah digabung ke MO lain, batang dedicated
+  // produk ini cuma yang penuh saja — sisanya dicor bersama produk lain.
+  const displayResult =
+    mergedBatch && pc.result
+      ? {
+          ...pc.result,
+          treesNeeded: pc.result.treesNeeded - 1,
+          totalPiecesCapacity:
+            (pc.result.treesNeeded - 1) * pc.result.piecesPerTree,
+        }
+      : pc.result;
+  const displayQuantity =
+    mergedBatch && pc.result
+      ? (pc.result.treesNeeded - 1) * pc.result.piecesPerTree
+      : pc.quantity;
 
   return (
     <div>
@@ -93,6 +118,20 @@ export default function MoPage() {
         </Card>
       </Section>
 
+      {mergedBatch && mergedInto && (
+        <div className="mb-6 rounded-lg border border-gold/40 bg-gold-soft px-4 py-3 text-sm text-gold-strong">
+          Sisa {formatInt(mergedBatch.pieces)} pcs ({formatGram(mergedBatch.weight)})
+          dari pesanan ini sudah digabung ke batang bersama produk lain — lihat{" "}
+          <Link
+            href={`/som/${som.id}/mo-gabungan/${mergedInto.id}`}
+            className="underline hover:no-underline"
+          >
+            {mergedInto.voucherNo}
+          </Link>
+          . Kalkulasi di bawah cuma untuk batang dedicated produk ini.
+        </div>
+      )}
+
       <Section title="Kalkulasi Tahap Casting">
         {pc.needsFlask ? (
           <Card className="border-gold/40 bg-gold-soft">
@@ -102,14 +141,14 @@ export default function MoPage() {
             </p>
           </Card>
         ) : (
-          pc.result &&
+          displayResult &&
           pc.metal &&
           pc.flask && (
             <CastingResultCard
-              result={pc.result}
+              result={displayResult}
               metalLabel={pc.metal.label}
               flaskLabel={pc.flask.label}
-              quantity={pc.quantity}
+              quantity={displayQuantity}
             />
           )
         )}

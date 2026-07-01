@@ -12,7 +12,9 @@ const TREE_DARK = "#8a6d1f";
 
 /**
  * Ilustrasi pohon lilin (wax tree) gaya ring-branch — 1 pohon representatif.
- * Trunk vertikal + beberapa cabang cincin bertumpuk; tiap pcs menempel radial.
+ * Trunk vertikal dengan cabang (ring) bertumpuk; setiap 1 pcs = 1 tingkat
+ * cabang. Jika pcs lebih banyak dari batas tampil, sisanya ditumpuk radial
+ * di cabang paling bawah supaya tetap terbaca.
  */
 export function WaxTreeSVG({
   piecesPerTree,
@@ -20,29 +22,36 @@ export function WaxTreeSVG({
   width = 220,
   height = 296,
 }: WaxTreeSVGProps) {
+  // Skala seluruh elemen relatif terhadap ukuran dasar 220×296, supaya
+  // komponen ini tetap proporsional saat dirender kecil (grid multi-batang).
+  const scale = width / 220;
+
   const trunkX = width / 2;
-  const trunkTop = 30;
-  const baseY = height - 28;
-  const trunkBottom = baseY - 26;
+  const trunkTop = 30 * scale;
+  const baseY = height - 28 * scale;
+  const trunkBottom = baseY - 26 * scale;
 
-  const maxRings = 6;
-  const perRingCap = 9;
-  const ringCount = Math.min(
-    maxRings,
-    Math.max(1, Math.ceil(piecesPerTree / perRingCap)),
-  );
+  // Setiap pcs = 1 tingkat cabang. Maksimal 6 tingkat ditampilkan; sisanya
+  // (jika pcs > 6) ditumpuk radial di tingkat paling bawah.
+  const maxLevels = 6;
+  const ringCount = Math.max(1, Math.min(maxLevels, piecesPerTree));
 
-  const piecesPerRing = Array(ringCount).fill(0) as number[];
-  for (let i = 0; i < piecesPerTree; i++) {
-    piecesPerRing[i % ringCount]++;
+  const piecesPerRing = Array(ringCount).fill(1) as number[];
+  const overflow = piecesPerTree - ringCount;
+  if (overflow > 0) {
+    piecesPerRing[ringCount - 1] += overflow;
   }
 
-  const ringAreaTop = trunkTop + 30;
+  const ringAreaTop = trunkTop + 30 * scale;
   const ringAreaBottom = trunkBottom;
   const ringSpacing =
     ringCount > 1 ? (ringAreaBottom - ringAreaTop) / (ringCount - 1) : 0;
-  const ringRx = 62;
-  const ringRy = 16;
+  const ringRx = 62 * scale;
+  const ringRy = 16 * scale;
+  const dotR = Math.max(1.5, 3.5 * scale);
+  const strokeThin = Math.max(0.75, 1.5 * scale);
+  const strokeMed = Math.max(1, 3 * scale);
+  const strokeTrunk = Math.max(1.5, 4 * scale);
 
   return (
     <svg
@@ -53,26 +62,32 @@ export function WaxTreeSVG({
       aria-label={`Pohon lilin dengan ${piecesPerTree} pcs`}
     >
       {/* base / stand */}
-      <ellipse cx={trunkX} cy={baseY} rx={55} ry={12} fill="#1a1a1a" />
+      <ellipse
+        cx={trunkX}
+        cy={baseY}
+        rx={55 * scale}
+        ry={12 * scale}
+        fill="#1a1a1a"
+      />
 
       {/* trunk */}
       <line
         x1={trunkX}
         y1={trunkTop}
         x2={trunkX}
-        y2={baseY - 4}
+        y2={baseY - 4 * scale}
         stroke={TREE_DARK}
-        strokeWidth={4}
+        strokeWidth={strokeTrunk}
         strokeLinecap="round"
       />
       {/* knob */}
       <circle
         cx={trunkX}
-        cy={trunkTop - 4}
-        r={6}
+        cy={trunkTop - 4 * scale}
+        r={Math.max(2, 6 * scale)}
         fill={TREE_COLOR}
         stroke={TREE_DARK}
-        strokeWidth={1.5}
+        strokeWidth={strokeThin}
       />
 
       {piecesPerRing.map((count, r) => {
@@ -86,8 +101,8 @@ export function WaxTreeSVG({
           const angle = (p / count) * Math.PI * 2 - Math.PI / 2;
           const px = trunkX + ringRx * Math.cos(angle);
           const py = ringY + ringRy * Math.sin(angle);
-          const ix = trunkX + (ringRx - 6) * Math.cos(angle);
-          const iy = ringY + (ringRy - 2) * Math.sin(angle);
+          const ix = trunkX + (ringRx - 6 * scale) * Math.cos(angle);
+          const iy = ringY + (ringRy - 2 * scale) * Math.sin(angle);
           dots.push(
             <g key={p}>
               <line
@@ -96,15 +111,15 @@ export function WaxTreeSVG({
                 x2={px}
                 y2={py}
                 stroke={TREE_COLOR}
-                strokeWidth={1.5}
+                strokeWidth={strokeThin}
               />
               <circle
                 cx={px}
                 cy={py}
-                r={3.5}
+                r={dotR}
                 fill={TREE_COLOR}
                 stroke={TREE_DARK}
-                strokeWidth={1}
+                strokeWidth={strokeThin * 0.7}
               />
             </g>,
           );
@@ -119,7 +134,7 @@ export function WaxTreeSVG({
               ry={ringRy}
               fill="none"
               stroke={TREE_COLOR}
-              strokeWidth={3}
+              strokeWidth={strokeMed}
             />
             {dots}
           </g>
@@ -131,7 +146,7 @@ export function WaxTreeSVG({
           x={trunkX}
           y={height - 6}
           textAnchor="middle"
-          fontSize={11}
+          fontSize={Math.max(8, 11 * scale)}
           fill="#5b5347"
         >
           × {formatInt(treesNeeded)} pohon

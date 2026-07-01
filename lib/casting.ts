@@ -230,6 +230,25 @@ export function aggregateSom(
   };
 }
 
+/**
+ * Distribusi pcs riil ke tiap batang pohon: batang penuh sebesar
+ * piecesPerTree, batang terakhir menampung sisanya (bisa kurang penuh).
+ */
+export function distributeTreePieces(
+  orderQty: number,
+  piecesPerTree: number,
+  treesNeeded: number,
+): number[] {
+  const perTree: number[] = [];
+  let remaining = orderQty;
+  for (let i = 0; i < treesNeeded; i++) {
+    const count = Math.min(piecesPerTree, remaining);
+    perTree.push(count);
+    remaining -= count;
+  }
+  return perTree;
+}
+
 /** Helper agregat langsung dari daftar produk (tanpa objek SOM). */
 export function aggregateLines(
   lines: SomLine[],

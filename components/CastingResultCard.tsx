@@ -1,7 +1,7 @@
 import type { CastingResult } from "@/lib/casting";
 import { formatGram, formatInt } from "@/lib/format";
 import { CapacityBar } from "./CapacityBar";
-import { WaxTreeSVG } from "./WaxTreeSVG";
+import { WaxTreeGrid } from "./WaxTreeGrid";
 
 interface CastingResultCardProps {
   result: CastingResult;
@@ -51,23 +51,25 @@ export function CastingResultCard({
         {formatInt(quantity)} pcs)
       </div>
 
-      <div className="mt-5 grid gap-6 sm:grid-cols-[1fr_auto]">
-        <div>
-          <h4 className="mb-2 text-sm font-medium text-ink">
-            Kapasitas Mesin per Batang
-          </h4>
-          <CapacityBar
-            machineCapacity={result.machineCapacity}
-            metalUsed={metalPerTree}
-          />
-        </div>
-        <div className="flex flex-col items-center">
-          <h4 className="mb-2 text-sm font-medium text-ink">Pohon Lilin</h4>
-          <WaxTreeSVG
-            piecesPerTree={result.piecesPerTree}
-            treesNeeded={result.treesNeeded}
-          />
-        </div>
+      <div className="mt-5">
+        <h4 className="mb-2 text-sm font-medium text-ink">
+          Kapasitas Mesin per Batang
+        </h4>
+        <CapacityBar
+          machineCapacity={result.machineCapacity}
+          metalUsed={metalPerTree}
+        />
+      </div>
+
+      <div className="mt-6">
+        <h4 className="mb-3 text-sm font-medium text-ink">
+          Pohon Lilin — {formatInt(result.treesNeeded)} batang aktual
+        </h4>
+        <WaxTreeGrid
+          quantity={quantity}
+          piecesPerTree={result.piecesPerTree}
+          treesNeeded={result.treesNeeded}
+        />
       </div>
     </div>
   );
